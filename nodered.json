@@ -1,0 +1,429 @@
+[
+    {
+        "id": "f9028fac.d1442",
+        "type": "tab",
+        "label": "is439-a1-s9323391c",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "aaea9e65.2f61c",
+        "type": "mqtt out",
+        "z": "f9028fac.d1442",
+        "name": "Send Alert",
+        "topic": "is439/tws/alert",
+        "qos": "2",
+        "retain": "",
+        "broker": "38a614b7.0aa2ec",
+        "x": 930,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "21b7649e.e5385c",
+        "type": "inject",
+        "z": "f9028fac.d1442",
+        "name": "Manual Count",
+        "topic": "",
+        "payload": "alert",
+        "payloadType": "str",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 130,
+        "y": 220,
+        "wires": [
+            [
+                "d684b9ae.7cd6f8"
+            ]
+        ]
+    },
+    {
+        "id": "8918a61d.4734f8",
+        "type": "mqtt in",
+        "z": "f9028fac.d1442",
+        "name": "Receive Response",
+        "topic": "is439/tws/response",
+        "qos": "2",
+        "broker": "38a614b7.0aa2ec",
+        "x": 130,
+        "y": 460,
+        "wires": [
+            [
+                "791b7d1c.612ae4"
+            ]
+        ]
+    },
+    {
+        "id": "86011f65.b0129",
+        "type": "delay",
+        "z": "f9028fac.d1442",
+        "name": "Delay 5 min",
+        "pauseType": "delayv",
+        "timeout": "5",
+        "timeoutUnits": "minutes",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "x": 770,
+        "y": 460,
+        "wires": [
+            [
+                "f879b2f5.1822b"
+            ]
+        ]
+    },
+    {
+        "id": "e3b964.0b8516a",
+        "type": "BeaconScanner",
+        "z": "f9028fac.d1442",
+        "name": "micro:bit",
+        "x": 120,
+        "y": 300,
+        "wires": [
+            [
+                "b061e939.ef1828"
+            ]
+        ]
+    },
+    {
+        "id": "b061e939.ef1828",
+        "type": "function",
+        "z": "f9028fac.d1442",
+        "name": "Filter",
+        "func": "microbit = {\n    id: \"dbe10c5d13cb\",\n    add: \"db:e1:0c:5d:13:cb\"\n}\n\nis_own_mb = msg.payload.id == microbit.id && \n        msg.payload.address == microbit.add\n\nif(is_own_mb){\n    return msg;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 310,
+        "y": 300,
+        "wires": [
+            [
+                "d684b9ae.7cd6f8"
+            ]
+        ]
+    },
+    {
+        "id": "58badf39.bdfa4",
+        "type": "debug",
+        "z": "f9028fac.d1442",
+        "name": "Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "x": 910,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "72728366.17f55c",
+        "type": "function",
+        "z": "f9028fac.d1442",
+        "name": "Counter and Alert",
+        "func": "// Check if counter is stopped\nstopCount = flow.get('stopcount')\n\n// Keep track of counter in node\ncount = flow.get('count')\n\nif(!stopCount){\n    count = isNaN(count) ? 1 : count + 1\n    flow.set('count',count)\n}\n\n// Set alert threshold\nthreshold = 20\n\nisExceed = count >= threshold\nisMultiple = count % 10 === 0\n\n// Send message if threshold exceeded\nif(isExceed && isMultiple && !stopCount){\n    return msg\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 550,
+        "y": 220,
+        "wires": [
+            [
+                "1e314539.409d6b"
+            ]
+        ]
+    },
+    {
+        "id": "6e52fa9.1b58304",
+        "type": "inject",
+        "z": "f9028fac.d1442",
+        "name": "Check count",
+        "topic": "",
+        "payload": "count",
+        "payloadType": "flow",
+        "repeat": "5",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 560,
+        "y": 300,
+        "wires": [
+            [
+                "58badf39.bdfa4"
+            ]
+        ]
+    },
+    {
+        "id": "57e0c9f0.665978",
+        "type": "inject",
+        "z": "f9028fac.d1442",
+        "name": "Manual Reset",
+        "topic": "",
+        "payload": "0",
+        "payloadType": "num",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 750,
+        "y": 540,
+        "wires": [
+            [
+                "f879b2f5.1822b"
+            ]
+        ]
+    },
+    {
+        "id": "1e314539.409d6b",
+        "type": "change",
+        "z": "f9028fac.d1442",
+        "name": "Send Count",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "count",
+                "tot": "flow"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 750,
+        "y": 220,
+        "wires": [
+            [
+                "aaea9e65.2f61c",
+                "58badf39.bdfa4"
+            ]
+        ]
+    },
+    {
+        "id": "d684b9ae.7cd6f8",
+        "type": "delay",
+        "z": "f9028fac.d1442",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "5",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "x": 340,
+        "y": 220,
+        "wires": [
+            [
+                "72728366.17f55c"
+            ]
+        ]
+    },
+    {
+        "id": "fb2f5888.b0e228",
+        "type": "change",
+        "z": "f9028fac.d1442",
+        "name": "Stop Count",
+        "rules": [
+            {
+                "t": "set",
+                "p": "stopcount",
+                "pt": "flow",
+                "to": "true",
+                "tot": "bool"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 590,
+        "y": 460,
+        "wires": [
+            [
+                "86011f65.b0129"
+            ]
+        ]
+    },
+    {
+        "id": "f879b2f5.1822b",
+        "type": "change",
+        "z": "f9028fac.d1442",
+        "name": "Reset and Start Count",
+        "rules": [
+            {
+                "t": "set",
+                "p": "count",
+                "pt": "flow",
+                "to": "0",
+                "tot": "num"
+            },
+            {
+                "t": "set",
+                "p": "stopcount",
+                "pt": "flow",
+                "to": "false",
+                "tot": "bool"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 960,
+        "y": 540,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5c0a4227.c6848c",
+        "type": "inject",
+        "z": "f9028fac.d1442",
+        "name": "Manual Stop 1",
+        "topic": "",
+        "payload": "{\"message\":\"ok\"}",
+        "payloadType": "json",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 140,
+        "y": 540,
+        "wires": [
+            [
+                "37a93d2a.7290e2"
+            ]
+        ]
+    },
+    {
+        "id": "791b7d1c.612ae4",
+        "type": "json",
+        "z": "f9028fac.d1442",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": true,
+        "x": 310,
+        "y": 460,
+        "wires": [
+            [
+                "44c838ca.1629a8",
+                "58badf39.bdfa4"
+            ]
+        ]
+    },
+    {
+        "id": "44c838ca.1629a8",
+        "type": "function",
+        "z": "f9028fac.d1442",
+        "name": "Confirm",
+        "func": "// Check if message is \"ok\"\nmsg_in = msg.payload\nmsg_sam = { \"message\":\"ok\" }\nis_msg = Object.keys(msg_sam).length == Object.keys(msg_in).length && msg_sam.message == msg_in.message\n\nif(is_msg){\n    return msg\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 420,
+        "y": 380,
+        "wires": [
+            [
+                "fb2f5888.b0e228",
+                "58badf39.bdfa4"
+            ]
+        ]
+    },
+    {
+        "id": "50fd498e.9f1d38",
+        "type": "comment",
+        "z": "f9028fac.d1442",
+        "name": "Manual Reset",
+        "info": "A manual reset must be done before starting",
+        "x": 750,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "2ca5c6b6.9a574a",
+        "type": "inject",
+        "z": "f9028fac.d1442",
+        "name": "Manual Stop 2",
+        "topic": "",
+        "payload": "{\"message\":\"ok\",\"action\":\"stop\"}",
+        "payloadType": "json",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 140,
+        "y": 620,
+        "wires": [
+            [
+                "37a93d2a.7290e2"
+            ]
+        ]
+    },
+    {
+        "id": "37a93d2a.7290e2",
+        "type": "mqtt out",
+        "z": "f9028fac.d1442",
+        "name": "Send Response",
+        "topic": "is439/tws/response",
+        "qos": "2",
+        "retain": "",
+        "broker": "38a614b7.0aa2ec",
+        "x": 340,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "936a7a11.bf0328",
+        "type": "inject",
+        "z": "f9028fac.d1442",
+        "name": "Manual Stop 3",
+        "topic": "",
+        "payload": "{\"message\":\"fail\"}",
+        "payloadType": "json",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 140,
+        "y": 700,
+        "wires": [
+            [
+                "37a93d2a.7290e2"
+            ]
+        ]
+    },
+    {
+        "id": "38a614b7.0aa2ec",
+        "type": "mqtt-broker",
+        "z": "",
+        "name": "Mosquitto Broker",
+        "broker": "test.mosquitto.org",
+        "port": "1883",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": true,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    }
+]
